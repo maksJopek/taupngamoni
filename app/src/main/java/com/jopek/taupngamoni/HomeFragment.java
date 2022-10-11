@@ -1,8 +1,10 @@
 package com.jopek.taupngamoni;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +31,10 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
     // TODO: Customize parameters
     private int mColumnCount = 1;
     private ArrayList<Currency> currencies = new ArrayList<>();
+    private ArrayList<Currency> selectedCurrencies = new ArrayList<>();
+    private HomeRecyclerAdapter recyclerAdapter = new HomeRecyclerAdapter(selectedCurrencies);
+    private RecyclerView recyclerView;
+    private Currency selectedCurrency = Currency.USD;
     private MySpinnerAdapter spinnerAdapter;
     private Spinner spinner;
 
@@ -52,26 +58,31 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        currencies.add(new Currency("USD", "United States Dollar", null));
-        currencies.add(new Currency("GBP", "British Pound Sterling", null));
-        currencies.add(new Currency("CHF", "Swiss Franc", null));
-        currencies.add(new Currency("PLN", "Polish Zloty", null));
-        currencies.add(new Currency("EUR", "Euro", null));
-        currencies.add(new Currency("JPY", "Japanese Yen", null));
-        currencies.add(new Currency("CNY", "Chinese Yuan", null));
-        currencies.add(new Currency("UAH", "Ukrainian Hryvnia", null));
-        currencies.add(new Currency("CZK", "Czech Republic Koruna", null));
-        currencies.add(new Currency("TWD", "New Taiwan Dollar", null));
+        currencies.add(Currency.USD);
+        currencies.add(Currency.GBP);
+        currencies.add(Currency.CHF);
+        currencies.add(Currency.PLN);
+        currencies.add(Currency.EUR);
+        currencies.add(Currency.JPY);
+        currencies.add(Currency.CNY);
+        currencies.add(Currency.UAH);
+        currencies.add(Currency.CZK);
+        currencies.add(Currency.TWD);
 
-        ArrayList<Currency> currenciesCopy = (ArrayList<Currency>) currencies.clone();
+        selectedCurrencies.add(Currency.USD);
+        selectedCurrencies.add(Currency.GBP);
+        selectedCurrencies.add(Currency.PLN);
+
         for (int i = 0; i < currencies.size(); i++) {
             Currency cur = currencies.get(i);
             RequestImage requestImage = new RequestImage();
             int finalI = i;
             requestImage.getBitmap("https://wise.com/public-resources/assets/flags/rectangle/" + cur.code.toLowerCase() + ".png", bitmap -> {
                 cur.img = bitmap;
+                cur.conversionTo = Currency.USD;
                 if (finalI + 1 == currencies.size()) {
                     spinner.setAdapter(spinnerAdapter);
+                    recyclerAdapter.notifyDataSetChanged();
                 }
             });
         }
@@ -87,26 +98,21 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_screen_home_list, container, false);
+        RecyclerView recyclerView = view.findViewById(R.id.list);
+        Log.d("maks", "onCreateView: " + view + container + recyclerView);
 
         spinner = view.findViewById(R.id.spinner);
         spinner.setOnItemSelectedListener(this);
-//        spinner.setAdapter(spinnerAdapter);
 
-        //Creating the ArrayAdapter instance having the country list
-        // ArrayAdapter aa = new ArrayAdapter(requireContext(), R.layout.spinner_item, currenciesCodes.toArray(new String[0]));
-        // aa.setDropDownViewResource(R.layout.spinner_item);
-        // Setting the ArrayAdapter data on the Spinner
-        // spin.setAdapter(new MySpinnerAdapter(requireContext(), currenciesCodes));
-        // Set the adapter
-        if (view instanceof RecyclerView) {
+        if (recyclerView instanceof RecyclerView) {
             Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
+//            recyclerView = (RecyclerView) view;
             if (mColumnCount <= 1) {
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new HomeRecyclerAdapter(PlaceholderContent.ITEMS));
+            recyclerView.setAdapter(recyclerAdapter);
         }
         return view;
     }
@@ -115,22 +121,14 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
     @Override
     public void onItemSelected(AdapterView<?> arg0, View view, int position, long id) {
         Toast.makeText(requireContext(), currencies.get(position).code, Toast.LENGTH_LONG).show();
+        for (Currency cur: selectedCurrencies) {
+            cur.conversionTo = currencies.get(position);
+        }
+        recyclerAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void onNothingSelected(AdapterView<?> arg0) {
         // TODO Auto-generated method stub
-    }
-}
-
-class Currency {
-    public String code;
-    public String description;
-    public Bitmap img;
-
-    public Currency(String code, String description, Bitmap img) {
-        this.code = code;
-        this.description = description;
-        this.img = img;
     }
 }

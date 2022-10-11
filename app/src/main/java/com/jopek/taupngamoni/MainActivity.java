@@ -8,6 +8,10 @@ import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.MenuItem;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.util.Collections;
+
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnItemSelectedListener {
 
     public static final String TAG = "maks";
@@ -40,13 +44,10 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         }
         return false;
     }
-}
 
-class Tuple<X, Y> {
-    public final X x;
-    public final Y y;
-    public Tuple(X x, Y y) {
-        this.x = x;
-        this.y = y;
+    public static String round(double num, int nPlaces) {
+        DecimalFormat df = new DecimalFormat("#." + String.join("", Collections.nCopies(nPlaces, "#")));
+        df.setRoundingMode(RoundingMode.CEILING);
+        return df.format(num);
     }
 }
