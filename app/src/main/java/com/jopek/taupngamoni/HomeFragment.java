@@ -1,15 +1,17 @@
 package com.jopek.taupngamoni;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
@@ -17,7 +19,8 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.jopek.taupngamoni.placeholder.PlaceholderContent;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -28,13 +31,14 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
 
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
+    public static Currency conversionTo;
+    public static double conversionAmount = 1.0;
+
     // TODO: Customize parameters
     private int mColumnCount = 1;
     private ArrayList<Currency> currencies = new ArrayList<>();
     private ArrayList<Currency> selectedCurrencies = new ArrayList<>();
-    private HomeRecyclerAdapter recyclerAdapter = new HomeRecyclerAdapter(selectedCurrencies);
-    private RecyclerView recyclerView;
-    private Currency selectedCurrency = Currency.USD;
+    private HomeRecyclerAdapter recyclerAdapter = new HomeRecyclerAdapter(selectedCurrencies, code -> selectedCurrencies.removeIf(cur -> cur.code.equals(code)));
     private MySpinnerAdapter spinnerAdapter;
     private Spinner spinner;
 
@@ -79,7 +83,7 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
             int finalI = i;
             requestImage.getBitmap("https://wise.com/public-resources/assets/flags/rectangle/" + cur.code.toLowerCase() + ".png", bitmap -> {
                 cur.img = bitmap;
-                cur.conversionTo = Currency.USD;
+                HomeFragment.conversionTo = Currency.USD;
                 if (finalI + 1 == currencies.size()) {
                     spinner.setAdapter(spinnerAdapter);
                     recyclerAdapter.notifyDataSetChanged();
@@ -87,7 +91,6 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
             });
         }
         spinnerAdapter = new MySpinnerAdapter(requireContext(), currencies);
-
 
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
@@ -104,28 +107,68 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
         spinner = view.findViewById(R.id.spinner);
         spinner.setOnItemSelectedListener(this);
 
-        if (recyclerView instanceof RecyclerView) {
-            Context context = view.getContext();
-//            recyclerView = (RecyclerView) view;
-            if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
+        EditText amountInput = view.findViewById(R.id.amount_input);
+        amountInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
-            recyclerView.setAdapter(recyclerAdapter);
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+            @Override
+            public void afterTextChanged(Editable s) {
+                String val = s.toString();
+                if (!val.equals("")) {
+                    HomeFragment.conversionAmount = Double.parseDouble(val);
+                } else {
+                    HomeFragment.conversionAmount = 0.0;
+                }
+                recyclerAdapter.notifyDataSetChanged();
+            }
+        });
+        TextView btnAdd = view.findViewById(R.id.btn_add);
+        btnAdd.setOnClickListener(v -> {
+            if(selectedCurrencies.stream().noneMatch(cur -> cur.code.equals(HomeFragment.conversionTo.code))) {
+                selectedCurrencies.add(HomeFragment.conversionTo);
+                updateList();
+            }
+        });
+
+        Context context = view.getContext();
+        if (mColumnCount <= 1) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        } else {
+            recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
         }
+        recyclerView.setAdapter(recyclerAdapter);
         return view;
     }
 
     //Performing action onItemSelected and onNothing selected
     @Override
     public void onItemSelected(AdapterView<?> arg0, View view, int position, long id) {
-        Toast.makeText(requireContext(), currencies.get(position).code, Toast.LENGTH_LONG).show();
-        for (Currency cur: selectedCurrencies) {
-            cur.conversionTo = currencies.get(position);
-        }
-        recyclerAdapter.notifyDataSetChanged();
+        Currency selCur = currencies.get(position);
+        HomeFragment.conversionTo = selCur;
+        updateList();
     }
+     public void updateList() {
+         String url = "https://api.exchangerate.host/latest?base=" + HomeFragment.conversionTo.code + "&symbols=";
+         for (Currency cur : selectedCurrencies) {
+             url += cur.code + ",";
+         }
+         Requests request = new Requests();
+         request.getJson(url, json -> {
+             try {
+                 JSONObject rates = json.getJSONObject("rates");
+                 for (Currency cur : selectedCurrencies) {
+                     cur.conversionFactor = rates.getDouble(cur.code);
+                 }
+             } catch (JSONException e) {
+                 e.printStackTrace();
+             }
+             recyclerAdapter.notifyDataSetChanged();
+         });
+     }
 
     @Override
     public void onNothingSelected(AdapterView<?> arg0) {

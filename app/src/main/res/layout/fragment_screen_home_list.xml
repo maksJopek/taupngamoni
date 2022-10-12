@@ -23,6 +23,9 @@
             android:layout_weight="1" />
 
         <EditText
+            android:id="@+id/amount_input"
+            android:text="1.0000"
+            android:inputType="number"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1" />
@@ -31,11 +34,12 @@
     <TextView
         android:layout_width="wrap_content"
         android:background="@color/teal_700"
-        android:text="Add new currency to list"
+        android:text="Add current currency to list"
         android:id="@+id/btn_add"
         android:textSize="25sp"
         android:paddingLeft="7dp"
         android:paddingRight="7dp"
+        android:layout_marginBottom="15dp"
         android:layout_gravity="center"
         android:layout_height="wrap_content"/>
 
