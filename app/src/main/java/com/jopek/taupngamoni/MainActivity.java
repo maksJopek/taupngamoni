@@ -6,6 +6,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.MenuItem;
 
 import java.math.RoundingMode;
@@ -19,6 +20,12 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+//        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+//                .detectLeakedClosableObjects()
+//                .penaltyLog()
+//                .build());
+        StrictMode.enableDefaults();
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 

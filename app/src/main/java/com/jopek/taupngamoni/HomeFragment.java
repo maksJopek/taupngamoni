@@ -1,5 +1,7 @@
 package com.jopek.taupngamoni;
 
+import static com.jopek.taupngamoni.Currency.CURRENCIES;
+
 import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,7 +14,6 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -36,17 +37,20 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
 
     // TODO: Customize parameters
     private int mColumnCount = 1;
-    private ArrayList<Currency> currencies = new ArrayList<>();
     private ArrayList<Currency> selectedCurrencies = new ArrayList<>();
     private HomeRecyclerAdapter recyclerAdapter = new HomeRecyclerAdapter(selectedCurrencies, code -> selectedCurrencies.removeIf(cur -> cur.code.equals(code)));
     private MySpinnerAdapter spinnerAdapter;
     private Spinner spinner;
+    private boolean wontSetSpinnerAdapter = false;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
     public HomeFragment() {
+        selectedCurrencies.add(Currency.USD);
+        selectedCurrencies.add(Currency.GBP);
+        selectedCurrencies.add(Currency.PLN);
     }
 
     // TODO: Customize parameter initialization
@@ -61,36 +65,28 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        spinnerAdapter = new MySpinnerAdapter(requireContext(), CURRENCIES);
 
-        currencies.add(Currency.USD);
-        currencies.add(Currency.GBP);
-        currencies.add(Currency.CHF);
-        currencies.add(Currency.PLN);
-        currencies.add(Currency.EUR);
-        currencies.add(Currency.JPY);
-        currencies.add(Currency.CNY);
-        currencies.add(Currency.UAH);
-        currencies.add(Currency.CZK);
-        currencies.add(Currency.TWD);
-
-        selectedCurrencies.add(Currency.USD);
-        selectedCurrencies.add(Currency.GBP);
-        selectedCurrencies.add(Currency.PLN);
-
-        for (int i = 0; i < currencies.size(); i++) {
-            Currency cur = currencies.get(i);
+        for (int i = 0; i < CURRENCIES.size(); i++) {
+            Currency cur = CURRENCIES.get(i);
             RequestImage requestImage = new RequestImage();
             int finalI = i;
-            requestImage.getBitmap("https://wise.com/public-resources/assets/flags/rectangle/" + cur.code.toLowerCase() + ".png", bitmap -> {
-                cur.img = bitmap;
-                HomeFragment.conversionTo = Currency.USD;
-                if (finalI + 1 == currencies.size()) {
-                    spinner.setAdapter(spinnerAdapter);
-                    recyclerAdapter.notifyDataSetChanged();
-                }
-            });
+            if (cur.img == null) {
+                Log.d("maks", "onCreate: requesting image");
+                requestImage.getBitmap("https://wise.com/public-resources/assets/flags/rectangle/" + cur.code.toLowerCase() + ".png", bitmap -> {
+                    cur.img = bitmap;
+                    HomeFragment.conversionTo = Currency.USD;
+                    if (finalI + 1 == CURRENCIES.size()) {
+                        spinner.setAdapter(spinnerAdapter);
+                        recyclerAdapter.notifyDataSetChanged();
+                    }
+                });
+            } else {
+//                spinner.setAdapter(spinnerAdapter);
+//                recyclerAdapter.notifyDataSetChanged();
+                wontSetSpinnerAdapter = true;
+            }
         }
-        spinnerAdapter = new MySpinnerAdapter(requireContext(), currencies);
 
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
@@ -102,7 +98,6 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_screen_home_list, container, false);
         RecyclerView recyclerView = view.findViewById(R.id.list);
-        Log.d("maks", "onCreateView: " + view + container + recyclerView);
 
         spinner = view.findViewById(R.id.spinner);
         spinner.setOnItemSelectedListener(this);
@@ -112,9 +107,11 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
             }
+
             @Override
             public void afterTextChanged(Editable s) {
                 String val = s.toString();
@@ -128,7 +125,7 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
         });
         TextView btnAdd = view.findViewById(R.id.btn_add);
         btnAdd.setOnClickListener(v -> {
-            if(selectedCurrencies.stream().noneMatch(cur -> cur.code.equals(HomeFragment.conversionTo.code))) {
+            if (selectedCurrencies.stream().noneMatch(cur -> cur.code.equals(HomeFragment.conversionTo.code))) {
                 selectedCurrencies.add(HomeFragment.conversionTo);
                 updateList();
             }
@@ -141,34 +138,41 @@ public class HomeFragment extends Fragment implements AdapterView.OnItemSelected
             recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
         }
         recyclerView.setAdapter(recyclerAdapter);
+
+        if (wontSetSpinnerAdapter) {
+            spinner.setAdapter(spinnerAdapter);
+            recyclerAdapter.notifyDataSetChanged();
+        }
+
         return view;
     }
 
     //Performing action onItemSelected and onNothing selected
     @Override
     public void onItemSelected(AdapterView<?> arg0, View view, int position, long id) {
-        Currency selCur = currencies.get(position);
+        Currency selCur = CURRENCIES.get(position);
         HomeFragment.conversionTo = selCur;
         updateList();
     }
-     public void updateList() {
-         String url = "https://api.exchangerate.host/latest?base=" + HomeFragment.conversionTo.code + "&symbols=";
-         for (Currency cur : selectedCurrencies) {
-             url += cur.code + ",";
-         }
-         Requests request = new Requests();
-         request.getJson(url, json -> {
-             try {
-                 JSONObject rates = json.getJSONObject("rates");
-                 for (Currency cur : selectedCurrencies) {
-                     cur.conversionFactor = rates.getDouble(cur.code);
-                 }
-             } catch (JSONException e) {
-                 e.printStackTrace();
-             }
-             recyclerAdapter.notifyDataSetChanged();
-         });
-     }
+
+    public void updateList() {
+        String url = "https://api.exchangerate.host/latest?base=" + HomeFragment.conversionTo.code + "&symbols=";
+        for (Currency cur : selectedCurrencies) {
+            url += cur.code + ",";
+        }
+        Requests request = new Requests();
+        request.getJson(url, json -> {
+            try {
+                JSONObject rates = json.getJSONObject("rates");
+                for (Currency cur : selectedCurrencies) {
+                    cur.conversionFactor = rates.getDouble(cur.code);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            recyclerAdapter.notifyDataSetChanged();
+        });
+    }
 
     @Override
     public void onNothingSelected(AdapterView<?> arg0) {

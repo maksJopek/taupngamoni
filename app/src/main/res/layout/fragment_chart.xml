@@ -40,14 +40,6 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/b1d"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="1D" />
-
-        <Button
             android:id="@+id/b7d"
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="match_parent"
@@ -78,6 +70,14 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="6M" />
+
+        <Button
+            android:id="@+id/b1d"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="9M" />
 
         <Button
             android:id="@+id/b1y"

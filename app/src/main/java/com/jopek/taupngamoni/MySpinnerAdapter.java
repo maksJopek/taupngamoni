@@ -9,14 +9,14 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class MySpinnerAdapter extends BaseAdapter {
     Context context;
-    ArrayList<Currency> currencies;
+    List<Currency> currencies;
     LayoutInflater inflater;
 
-    public MySpinnerAdapter(Context applicationContext, ArrayList<Currency> currencies) {
+    public MySpinnerAdapter(Context applicationContext, List<Currency> currencies) {
         this.context = applicationContext;
         this.currencies = currencies;
         inflater = (LayoutInflater.from(applicationContext));

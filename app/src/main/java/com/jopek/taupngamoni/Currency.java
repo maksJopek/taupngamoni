@@ -2,6 +2,8 @@ package com.jopek.taupngamoni;
 
 import android.graphics.Bitmap;
 
+import java.util.List;
+
 public class Currency {
     public String code;
     public String description;
@@ -19,6 +21,8 @@ public class Currency {
     public static final Currency UAH = new Currency("UAH", "Ukrainian Hryvnia", null, "₴", 0.0);
     public static final Currency CZK = new Currency("CZK", "Czech Republic Koruna", null, "Kč", 0.0);
     public static final Currency TWD = new Currency("TWD", "New Taiwan Dollar", null, "圓", 0.0);
+
+    public static final List<Currency> CURRENCIES = List.of(USD, GBP, CHF, PLN, EUR, JPY, CNY, UAH, CZK, TWD);
 
     public Currency(String code, String description, Bitmap img, String symbol, double conversionFactor) {
         this.code = code;

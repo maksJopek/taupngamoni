@@ -36,7 +36,6 @@ class RequestImage extends AsyncTask<String, Void, Bitmap> {
         Bitmap bmp = null;
         try {
             InputStream in = new URL(urldisplay).openStream();
-            Log.d("maks", "doInBackground: " + in.available());
             bmp = BitmapFactory.decodeStream(in);
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,9 +73,10 @@ public class Requests extends AsyncTask<String, Integer, String> {
     }
 
     protected String doInBackground(String... urls) {
+        InputStream in = null;
         try {
             URL url = new URL(urls[0]);
-            InputStream in = url.openStream();
+             in = url.openStream();
 //            Log.d("maks", "doInBackground: " + in.available());
 //            bmp = BitmapFactory.decodeStream(in);
 //            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -91,8 +91,16 @@ public class Requests extends AsyncTask<String, Integer, String> {
             while ((line = rd.readLine()) != null) {
                 content += line + "\n";
             }
+            in.close();
             return content;
         } catch (IOException exception) {
+            if(in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             exception.printStackTrace();
             return "ERROR";
         }
