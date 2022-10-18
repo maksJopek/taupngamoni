@@ -118,7 +118,7 @@ public class ChartFragment extends Fragment {
 //        }
         checkFrom = 0;
         checkTo = 0;
-        refreshChart();
+//        refreshChart();
 
 //        cartesian.title("Trend of Sales of the Most Popular Products of ACME Corp.");
 
@@ -139,14 +139,15 @@ public class ChartFragment extends Fragment {
             Log.d("maks", "onCreateView: ");
             refreshChart();
         });
-        anyChartView.setVisibility(View.INVISIBLE);
-        new android.os.Handler(Looper.getMainLooper()).postDelayed(
-                () -> {
-                    anyChartView.setVisibility(View.VISIBLE);
-                    refreshChart();
-                },
-                1500);
-
+//        if (spinnerFromAdapter == null) {
+            anyChartView.setVisibility(View.INVISIBLE);
+            new android.os.Handler(Looper.getMainLooper()).postDelayed(
+                    () -> {
+                        anyChartView.setVisibility(View.VISIBLE);
+                        refreshChart();
+                    },
+                    1500);
+//        }
 
         return view;
     }
